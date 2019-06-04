@@ -2,6 +2,8 @@ package org.rublin.nodemonitorbot.telegram;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.rublin.nodemonitorbot.model.Node;
+import org.rublin.nodemonitorbot.service.NodeService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -20,6 +22,7 @@ import javax.annotation.PostConstruct;
 public class TelegramConnection extends TelegramLongPollingBot {
 
     private final TelegramBotsApi telegramBotsApi;
+    private final NodeService nodeService;
 
     @Value("${telegram.bot.token}")
     private String token;
@@ -30,7 +33,8 @@ public class TelegramConnection extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
-            send(update.getMessage().getText(), null, update.getMessage().getChatId());
+            Node node = nodeService.registerNode(update.getMessage().getText());
+            send("Node successfully registered: " + node, null, update.getMessage().getChatId());
         }
     }
 

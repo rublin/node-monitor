@@ -1,4 +1,3 @@
-
 # Telegram bot
 telegram:
   bot:
@@ -6,3 +5,14 @@ telegram:
     name: karbo_node_bot
 server:
   port: 8087
+
+node:
+  port: 32348
+spring:
+  data:
+    mongodb:
+      username: java-node-bot
+      password: jH6#2kurWZ1L
+      host: ds231537.mlab.com
+      port: 31537
+      database: karbo-nodes
