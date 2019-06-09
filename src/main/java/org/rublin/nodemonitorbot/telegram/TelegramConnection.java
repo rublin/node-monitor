@@ -2,8 +2,9 @@ package org.rublin.nodemonitorbot.telegram;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.rublin.nodemonitorbot.model.Node;
-import org.rublin.nodemonitorbot.service.NodeService;
+import org.rublin.nodemonitorbot.dto.TelegramResponseDto;
+import org.rublin.nodemonitorbot.exception.TelegramProcessException;
+import org.rublin.nodemonitorbot.service.TelegramService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -16,13 +17,15 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import javax.annotation.PostConstruct;
 
+import static org.rublin.nodemonitorbot.telegram.TelegramKeyboardUtil.defaultKeyboard;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class TelegramConnection extends TelegramLongPollingBot {
 
     private final TelegramBotsApi telegramBotsApi;
-    private final NodeService nodeService;
+    private final TelegramService telegramService;
 
     @Value("${telegram.bot.token}")
     private String token;
@@ -33,8 +36,13 @@ public class TelegramConnection extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
-            Node node = nodeService.registerNode(update.getMessage().getText());
-            send("Node successfully registered: " + node, null, update.getMessage().getChatId());
+            try {
+                TelegramResponseDto response = telegramService.process(update.getMessage());
+                response.getMessages().forEach(message -> send(message, response.getKeyboard(), response.getId()));
+            } catch (TelegramProcessException e) {
+                telegramService.cleanPreviousCommand(update.getMessage().getChatId());
+                send(e.getMessage(), defaultKeyboard(), update.getMessage().getChatId());
+            }
         }
     }
 

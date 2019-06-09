@@ -12,7 +12,9 @@ public interface NodeService {
 
     Node update(Node node, long height, String version);
 
-    TelegramUser subscribe(Node node);
+    Node subscribe(Node node, TelegramUser user);
 
     List<Node> getAll();
+
+    List<Node> getAllActive();
 }

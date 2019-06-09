@@ -5,20 +5,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.rublin.nodemonitorbot.dto.NodeInfoResponseDto;
 import org.rublin.nodemonitorbot.events.OnHeightEvent;
 import org.rublin.nodemonitorbot.events.OnNodeVersionEvent;
+import org.rublin.nodemonitorbot.exception.TelegramProcessException;
 import org.rublin.nodemonitorbot.model.Node;
 import org.rublin.nodemonitorbot.model.TelegramUser;
 import org.rublin.nodemonitorbot.repository.NodeRepository;
 import org.rublin.nodemonitorbot.utils.NodeConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -42,10 +46,18 @@ public class NodeServiceImpl implements NodeService {
         if (optionalResponse.isPresent()) {
             Node node = NodeConverter.convert(new Node(), optionalResponse);
             node.setAddress(address);
-
-            return nodeRepository.save(node);
+            try {
+                Node save = nodeRepository.save(node);
+                log.info("Register new node with {} address", address);
+                return save;
+            } catch (DuplicateKeyException exception) {
+                String message = format("Node with IP %s already present", address);
+                log.warn(message);
+                throw new TelegramProcessException(message);
+            }
         }
 
+        log.warn("There is no Karbo node at {}", address);
         throw new RuntimeException("There is no Karbo node at " + address);
     }
 
@@ -81,13 +93,27 @@ public class NodeServiceImpl implements NodeService {
     }
 
     @Override
-    public TelegramUser subscribe(Node node) {
-        return null;
+    public Node subscribe(Node node, TelegramUser user) {
+        node.getSubscribers().add(user);
+        log.info("User {} will subscribe to node {}", user.getTelegramId(), node.getAddress());
+        return nodeRepository.save(node);
     }
 
     @Override
     public List<Node> getAll() {
-        return nodeRepository.findAll(new Sort(Sort.Direction.DESC, "uptime"));
+        List<Node> nodes = nodeRepository.findAll(new Sort(Sort.Direction.DESC, "height"));
+        log.info("Found all {} nodes", nodes.size());
+        return nodes;
+    }
+
+    @Override
+    public List<Node> getAllActive() {
+        List<Node> activeNodes = getAll().stream()
+                .filter(Node::isAvailable)
+                .sorted(Comparator.comparing(Node::uptime).reversed())
+                .collect(Collectors.toList());
+        log.info("There are {} active nodes", activeNodes.size());
+        return activeNodes;
     }
 
     private Optional<NodeInfoResponseDto> verifyNode(String ip) {
