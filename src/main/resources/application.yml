@@ -8,6 +8,8 @@ server:
 
 node:
   port: 32348
+  cron: "0 0/5 * * * *"
+#  core:
 spring:
   data:
     mongodb:

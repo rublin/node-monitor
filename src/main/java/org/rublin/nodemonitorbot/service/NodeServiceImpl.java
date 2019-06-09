@@ -3,17 +3,20 @@ package org.rublin.nodemonitorbot.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rublin.nodemonitorbot.dto.NodeInfoResponseDto;
+import org.rublin.nodemonitorbot.events.OnHeightEvent;
+import org.rublin.nodemonitorbot.events.OnNodeVersionEvent;
 import org.rublin.nodemonitorbot.model.Node;
 import org.rublin.nodemonitorbot.model.TelegramUser;
 import org.rublin.nodemonitorbot.repository.NodeRepository;
+import org.rublin.nodemonitorbot.utils.NodeConverter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,25 +31,53 @@ public class NodeServiceImpl implements NodeService {
 
     private final NodeRepository nodeRepository;
     private final RestTemplate restTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${node.port}")
     private int port;
 
     @Override
-    public Node registerNode(String ip) {
-        Optional<NodeInfoResponseDto> optionalResponse = verifyNode(ip);
+    public Node registerNode(String address) {
+        Optional<NodeInfoResponseDto> optionalResponse = verifyNode(address);
         if (optionalResponse.isPresent()) {
-            NodeInfoResponseDto info = optionalResponse.get();
-            Node node = new Node();
-            node.setIpAddress(ip);
-            node.setHeight(info.getHeight());
-            node.setVersion(info.getVersion());
-            node.setUpdated(LocalDateTime.now());
-            node.setUptime(100);
+            Node node = NodeConverter.convert(new Node(), optionalResponse);
+            node.setAddress(address);
+
             return nodeRepository.save(node);
         }
 
-        throw new RuntimeException("There is no Karbo node at " + ip);
+        throw new RuntimeException("There is no Karbo node at " + address);
+    }
+
+    @Override
+    public Node update(Node node) {
+        Optional<NodeInfoResponseDto> optionalResponse = verifyNode(node.getAddress());
+        return nodeRepository.save(NodeConverter.convert(node, optionalResponse));
+
+    }
+
+    @Override
+    public Node update(Node node, long height, String version) {
+        if (height - node.getHeight() > 3 && node.isHeightOk()) {
+            // node is not up to date
+            node.setAvailable(false);
+            node.setHeightOk(false);
+            nodeRepository.save(node);
+            eventPublisher.publishEvent(new OnHeightEvent(
+                    format("Your node has wrong height: %d. The correct height: %d",
+                            node.getHeight(),
+                            height),
+                    node));
+        } else if (!version.equals(node.getVersion()) && node.isVersionOk()) {
+            node.setVersionOk(false);
+            nodeRepository.save(node);
+            eventPublisher.publishEvent(new OnNodeVersionEvent(
+                    format("Your node version (%s) is not the latest. The latest version is %s",
+                            node.getVersion(),
+                            version),
+                    node));
+        }
+        return node;
     }
 
     @Override
