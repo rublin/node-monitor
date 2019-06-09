@@ -12,8 +12,13 @@ public class TelegramKeyboardUtil {
     public static ReplyKeyboardMarkup defaultKeyboard() {
         ReplyKeyboardMarkup replyKeyboardMarkup = initKeyboard();
         replyKeyboardMarkup.getKeyboard().clear();
-        replyKeyboardMarkup.getKeyboard().add(createKeyboardRow(ADD.getCommandName(), SUBSCRIBE.getCommandName(), GET.getCommandName()));
-        replyKeyboardMarkup.getKeyboard().add(createKeyboardRow(INFO.getCommandName()));
+        replyKeyboardMarkup.getKeyboard().add(createKeyboardRow(
+                ADD.getCommandName(),
+                SUBSCRIBE.getCommandName(),
+                GET.getCommandName()));
+        replyKeyboardMarkup.getKeyboard().add(createKeyboardRow(
+                MY_SUBSCRIPTIONS.getCommandName(),
+                INFO.getCommandName()));
 
         return replyKeyboardMarkup;
     }

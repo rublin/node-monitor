@@ -100,6 +100,13 @@ public class NodeServiceImpl implements NodeService {
     }
 
     @Override
+    public List<Node> mySubscriptions(TelegramUser user) {
+        List<Node> mySubscriptions = nodeRepository.findBySubscribers(user);
+        log.info("Found {} nodes by user {}", mySubscriptions.size(), user.getTelegramId());
+        return mySubscriptions;
+    }
+
+    @Override
     public List<Node> getAll() {
         List<Node> nodes = nodeRepository.findAll(new Sort(Sort.Direction.DESC, "height"));
         log.info("Found all {} nodes", nodes.size());

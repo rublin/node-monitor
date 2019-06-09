@@ -14,6 +14,8 @@ public interface NodeService {
 
     Node subscribe(Node node, TelegramUser user);
 
+    List<Node> mySubscriptions(TelegramUser user);
+
     List<Node> getAll();
 
     List<Node> getAllActive();

@@ -14,9 +14,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static org.rublin.nodemonitorbot.telegram.TelegramCommand.*;
 import static org.rublin.nodemonitorbot.telegram.TelegramKeyboardUtil.defaultKeyboard;
 import static org.rublin.nodemonitorbot.telegram.TelegramKeyboardUtil.getAll;
@@ -88,8 +88,15 @@ public class TelegramServiceImpl implements TelegramService {
                 previousCommand.remove(chatId);
                 List<String> nodes = nodeService.getAllActive().stream()
                         .map(Node::toString)
-                        .collect(Collectors.toList());
+                        .collect(toList());
                 responseMessages.addAll(nodes);
+                break;
+
+            case MY_SUBSCRIPTIONS:
+                List<Node> mySubscriptions = nodeService.mySubscriptions(getUser(message));
+                responseMessages.addAll(mySubscriptions.stream()
+                        .map(Node::toString)
+                        .collect(toList()));
                 break;
 
             case RETURN:
@@ -115,14 +122,7 @@ public class TelegramServiceImpl implements TelegramService {
         TelegramCommand command = previousCommand.get(chatId);
         if (command == ADD) {
             Node node = nodeService.registerNode(AddressResolver.getIpAddress(message.getText()));
-            Optional<TelegramUser> optionalUser = telegramUserService.get(chatId);
-            if (optionalUser.isPresent()) {
-                node = nodeService.subscribe(node, optionalUser.get());
-            } else {
-                log.warn("For some reason there is no user with id {}. Will create it now", chatId);
-                node = nodeService.subscribe(node, telegramUserService.save(
-                        new TelegramUser(null, chatId, getName(message))));
-            }
+            node = nodeService.subscribe(node, getUser(message));
             responseMessages.add("Node successfully added\n\n" + node.toString());
         } else if (command == SUBSCRIBE) {
             responseMessages.add("not supported yet");
@@ -137,6 +137,17 @@ public class TelegramServiceImpl implements TelegramService {
                 .messages(responseMessages)
                 .keyboard(keyboard)
                 .build();
+    }
+
+    private TelegramUser getUser(Message message) {
+        Optional<TelegramUser> optional = telegramUserService.get(message.getChatId());
+        if (optional.isPresent()) {
+            return optional.get();
+        } else {
+            log.warn("For some reason there is no user with id {}. Will create it now", message.getChatId());
+            return telegramUserService.save(
+                    new TelegramUser(null, message.getChatId(), getName(message)));
+        }
     }
 
     private String getName(Message message) {
