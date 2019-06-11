@@ -48,7 +48,7 @@ public class TelegramConnection extends TelegramLongPollingBot {
 
     private void send(String message, ReplyKeyboardMarkup keyboard, long chatId) {
         SendMessage sendMessage = new SendMessage();
-        sendMessage.enableMarkdown(true);
+        sendMessage.enableHtml(true);
         sendMessage.setChatId(chatId);
         sendMessage.setText(message);
         sendMessage.setReplyMarkup(keyboard);
@@ -59,6 +59,7 @@ public class TelegramConnection extends TelegramLongPollingBot {
             log.error("Failed to send Telegram message to {}: ", chatId, e);
         }
     }
+
     @Override
     public String getBotUsername() {
         return name;

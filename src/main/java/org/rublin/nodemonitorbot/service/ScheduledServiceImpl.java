@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.stream.Collectors.toList;
 
@@ -26,6 +27,7 @@ public class ScheduledServiceImpl implements ScheduledService {
         log.info("Cron job started");
         List<Node> allNodes = nodeService.getAll().stream()
                 .map(nodeService::update)
+                .filter(Objects::nonNull)
                 .sorted(Comparator.comparing(Node::getHeight).reversed())
                 .collect(toList());
 

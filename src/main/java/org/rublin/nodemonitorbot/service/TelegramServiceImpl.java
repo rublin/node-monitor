@@ -7,19 +7,28 @@ import org.rublin.nodemonitorbot.exception.TelegramProcessException;
 import org.rublin.nodemonitorbot.model.Node;
 import org.rublin.nodemonitorbot.model.TelegramUser;
 import org.rublin.nodemonitorbot.telegram.TelegramCommand;
-import org.rublin.nodemonitorbot.utils.AddressResolver;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
-import static org.rublin.nodemonitorbot.telegram.TelegramCommand.*;
+import static org.rublin.nodemonitorbot.telegram.TelegramCommand.ADD;
+import static org.rublin.nodemonitorbot.telegram.TelegramCommand.GET;
+import static org.rublin.nodemonitorbot.telegram.TelegramCommand.GET_ALL;
+import static org.rublin.nodemonitorbot.telegram.TelegramCommand.SUBSCRIBE;
+import static org.rublin.nodemonitorbot.telegram.TelegramCommand.UNSUBSCRIBE;
 import static org.rublin.nodemonitorbot.telegram.TelegramKeyboardUtil.defaultKeyboard;
 import static org.rublin.nodemonitorbot.telegram.TelegramKeyboardUtil.getAll;
+import static org.rublin.nodemonitorbot.utils.AddressResolver.getIpAddress;
 
 @Slf4j
 @Service
@@ -65,6 +74,7 @@ public class TelegramServiceImpl implements TelegramService {
         ReplyKeyboardMarkup keyboard = defaultKeyboard();
         List<String> responseMessages = new ArrayList<>();
         Long chatId = message.getChatId();
+        TelegramUser user = getUser(message);
         switch (command) {
             case ADD:
                 previousCommand.put(chatId, command);
@@ -73,9 +83,21 @@ public class TelegramServiceImpl implements TelegramService {
                 break;
 
             case SUBSCRIBE:
-                previousCommand.put(chatId, command);
-                responseMessages.add("Type node IP or hostname for subscribing");
-                keyboard = null;
+                Node node = nodeService.get(getIpAddress(addressFromCommand(message.getText())));
+                if (node.getSubscribers().contains(user)) {
+                    log.debug("User {} already subscribed to node {}", user.getTelegramId(), node.getAddress());
+                    responseMessages.add("You already subscribed to node " + node.getAddress());
+                } else {
+                    node = nodeService.subscribe(node, user);
+                    log.info("User {} successfully subscribed to node {}", user.getTelegramId(), node.getAddress());
+                    responseMessages.add("You successfully subscribed to node " + node.getAddress());
+                }
+                break;
+
+            case UNSUBSCRIBE:
+                String address = addressFromCommand(message.getText());
+                nodeService.unsubscribe(address, user);
+                responseMessages.add("You successfully unsubscribed from node " + address);
                 break;
 
             case GET:
@@ -86,8 +108,8 @@ public class TelegramServiceImpl implements TelegramService {
 
             case GET_ALL:
                 previousCommand.remove(chatId);
-                List<String> nodes = nodeService.getAllActive().stream()
-                        .map(Node::toString)
+                List<String> nodes = nodeService.getAll().stream()
+                        .map(n -> nodeToTelegram(n, user))
                         .collect(toList());
                 responseMessages.addAll(nodes);
                 break;
@@ -95,12 +117,16 @@ public class TelegramServiceImpl implements TelegramService {
             case MY_SUBSCRIPTIONS:
                 List<Node> mySubscriptions = nodeService.mySubscriptions(getUser(message));
                 responseMessages.addAll(mySubscriptions.stream()
-                        .map(Node::toString)
+                        .map(n -> nodeToTelegram(n, user))
                         .collect(toList()));
+                if (responseMessages.isEmpty()) {
+                    responseMessages.add("You do not have any subscriptions yet");
+                }
                 break;
 
             case RETURN:
                 previousCommand.remove(chatId);
+                responseMessages.add("Select the next step");
                 break;
 
             case INFO:
@@ -115,22 +141,49 @@ public class TelegramServiceImpl implements TelegramService {
                 .build();
     }
 
+    private String addressFromCommand(String text) {
+        return text.substring(text.indexOf("_") + 1).replaceAll("_", "\\.");
+    }
+
+    private String nodeToTelegram(Node node, TelegramUser user) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Address: ").append(node.getAddress()).append("\n");
+        sb.append("Height: ").append(node.getHeight()).append(isOkEmoji(node.isHeightOk()));
+        sb.append("Version: ").append(node.getVersion()).append(isOkEmoji(node.isVersionOk()));
+        sb.append("Active: ").append(node.isAvailable() ? "active" : "not active").append(isOkEmoji(node.isAvailable()));
+        sb.append("\n\n");
+        sb.append(internalSubscriptionCommand(node.getSubscribers().contains(user), node.getAddress()));
+        return sb.toString();
+    }
+
+    private String internalSubscriptionCommand(boolean subscribed, String address) {
+        address = address.replaceAll("\\.", "_");
+        if (subscribed) {
+            return "Unsubscribe: " + UNSUBSCRIBE.getCommandName().concat(address);
+        }
+        return "Subscribe: " + SUBSCRIBE.getCommandName().concat(address);
+    }
+
+    private String isOkEmoji(boolean isOk) {
+        return isOk ? " \uD83D\uDC4C\n" : " \uD83D\uDC4E\n";
+    }
+
     private TelegramResponseDto processNotCommand(Message message) {
         ReplyKeyboardMarkup keyboard = defaultKeyboard();
         List<String> responseMessages = new ArrayList<>();
         Long chatId = message.getChatId();
         TelegramCommand command = previousCommand.get(chatId);
+        previousCommand.remove(chatId);
+        TelegramUser user = getUser(message);
         if (command == ADD) {
-            Node node = nodeService.registerNode(AddressResolver.getIpAddress(message.getText()));
-            node = nodeService.subscribe(node, getUser(message));
+            Node node = nodeService.registerNode(getIpAddress(message.getText()));
+            node = nodeService.subscribe(node, user);
             responseMessages.add("Node successfully added\n\n" + node.toString());
-        } else if (command == SUBSCRIBE) {
-            responseMessages.add("not supported yet");
+        } else if (command == GET) {
+            responseMessages.add(nodeToTelegram(nodeService.get(getIpAddress(message.getText())), user));
         } else {
             throw new TelegramProcessException("Unknown command: " + message.getText());
         }
-
-        previousCommand.remove(chatId);
 
         return TelegramResponseDto.builder()
                 .id(chatId)

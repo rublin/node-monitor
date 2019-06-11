@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import javax.validation.constraints.NotBlank;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -63,9 +64,17 @@ public class NodeServiceImpl implements NodeService {
 
     @Override
     public Node update(Node node) {
-        Optional<NodeInfoResponseDto> optionalResponse = verifyNode(node.getAddress());
-        return nodeRepository.save(NodeConverter.convert(node, optionalResponse));
-
+        try {
+            Optional<NodeInfoResponseDto> optionalResponse = verifyNode(node.getAddress());
+            return nodeRepository.save(NodeConverter.convert(node, optionalResponse));
+        } catch (Throwable e) {
+            log.error("Failed to receive update for node {}: {}", node.getAddress(), e.getMessage());
+        }
+        if (node.isAvailable()) {
+            node.setAvailable(false);
+            nodeRepository.save(node);
+        }
+        return null;
     }
 
     @Override
@@ -100,6 +109,14 @@ public class NodeServiceImpl implements NodeService {
     }
 
     @Override
+    public Node unsubscribe(String address, TelegramUser user) {
+        Node node = get(address);
+        node.getSubscribers().remove(user);
+        log.info("User {} unsubscribed from node {}", user.getTelegramId(), node.getAddress());
+        return nodeRepository.save(node);
+    }
+
+    @Override
     public List<Node> mySubscriptions(TelegramUser user) {
         List<Node> mySubscriptions = nodeRepository.findBySubscribers(user);
         log.info("Found {} nodes by user {}", mySubscriptions.size(), user.getTelegramId());
@@ -121,6 +138,13 @@ public class NodeServiceImpl implements NodeService {
                 .collect(Collectors.toList());
         log.info("There are {} active nodes", activeNodes.size());
         return activeNodes;
+    }
+
+    @Override
+    public Node get(@NotBlank String address) {
+        Optional<Node> optionalNode = nodeRepository.findByAddress(address);
+        log.info("{} node by address {}", optionalNode.isPresent() ? "Found" : "Not found", address);
+        return optionalNode.orElseGet(() -> registerNode(address));
     }
 
     private Optional<NodeInfoResponseDto> verifyNode(String ip) {

@@ -10,10 +10,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public enum TelegramCommand {
     INFO("\u2139 Info"),
-    ADD("Add"),
-    SUBSCRIBE("Subscribe"),
-    MY_SUBSCRIPTIONS("My subscriptions"),
-    GET("Get"),
+    ADD("\u2795 Add"),
+    SUBSCRIBE("/subscribe_"),
+    UNSUBSCRIBE("/unsubscribe_"),
+    MY_SUBSCRIPTIONS("\uD83D\uDCAC My subscriptions"),
+    GET("\uD83D\uDCCB Get"),
     GET_ALL("Get all"),
     RETURN("\uD83D\uDD19 Return");
 
@@ -21,7 +22,7 @@ public enum TelegramCommand {
 
     public static Optional<TelegramCommand> fromCommandName(String commandName) {
         return Arrays.stream(values())
-                .filter(command -> command.getCommandName().equalsIgnoreCase(commandName))
+                .filter(command -> commandName.startsWith(command.getCommandName()))
                 .findFirst();
     }
 }
