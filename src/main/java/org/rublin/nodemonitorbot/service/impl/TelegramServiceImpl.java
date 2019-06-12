@@ -184,7 +184,7 @@ public class TelegramServiceImpl implements TelegramService {
     }
 
     private String isOkEmoji(boolean isOk) {
-        return isOk ? " \ud83d\udc4d\n" : " \ud83d\udc4d\n";
+        return isOk ? " \ud83d\udc4d\n" : " \uD83D\uDC4E\n";
     }
 
     private TelegramResponseDto processNotCommand(Message message) {
