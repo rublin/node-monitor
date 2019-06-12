@@ -81,14 +81,17 @@ public class NodeServiceImpl implements NodeService {
     public Node update(Node node, long height, String version) {
         String message = "";
         if (isNodeHeightNeedsToCorrect(node, height)) {
-            message = format("Your node [%s] has wrong height: %d. The correct height: %d\n", node.getAddress(), height, node.getHeight());
+            message = node.isHeightOk() ?
+                    format("Your node [%s] height is good now \ud83d\udc4d\n", node.getAddress()) :
+                    format("\u26A0\u26A0\u26A0 Your node [%s] has wrong height: %d. The correct height: %d\n", node.getAddress(), height, node.getHeight());
         }
         if (isNodeVersionNeedsToUpdate(node, version)) {
-            message = message.concat(message.isEmpty() ? "" : "Also, ");
-            message = message.concat(format("Your node [%s] version %s is not the latest. The latest version is %s",
-                    node.getAddress(),
-                    node.getVersion(),
-                    version));
+            message = node.isVersionOk() ?
+                    message.concat(format("Your node [%s] version is the latest now \ud83d\udc4d", node.getAddress())) :
+                    message.concat(format("\u26A0\u26A0\u26A0 Your node [%s] version %s is not the latest. The latest version is %s",
+                            node.getAddress(),
+                            node.getVersion(),
+                            version));
         }
         if (message.isEmpty()) {
             return node;
@@ -107,12 +110,13 @@ public class NodeServiceImpl implements NodeService {
             return true;
         } else if (version.equals(nodeVersion) && !node.isVersionOk()) {
             log.info("Node {} has good version now", node.getAddress());
-            node.setVersionOk(false);
+            node.setVersionOk(true);
+            return true;
         }
         return false;
     }
 
-    private boolean isNodeHeightNeedsToCorrect(Node node, long height) {
+    boolean isNodeHeightNeedsToCorrect(Node node, long height) {
         if (height - node.getHeight() > 3 && node.isHeightOk()) {
             // node is not up to date
             node.setAvailable(false);
@@ -122,6 +126,7 @@ public class NodeServiceImpl implements NodeService {
         } else if (height - node.getHeight() == 0 && !node.isHeightOk()) {
             node.setAvailable(true);
             node.setHeightOk(true);
+            return true;
         }
         return false;
     }

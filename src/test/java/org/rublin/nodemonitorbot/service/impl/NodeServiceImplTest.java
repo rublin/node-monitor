@@ -52,6 +52,22 @@ public class NodeServiceImplTest {
         assertFalse(nodeService.isNodeVersionNeedsToUpdate(node, ""));
         assertFalse(node.isVersionOk());
     }
+
+    @Test
+    public void nodeHeightTest() {
+        Node node = createNode();
+
+        assertTrue(nodeService.isNodeHeightNeedsToCorrect(node, 127L));
+        assertFalse(node.isHeightOk());
+
+        node.setHeightOk(true);
+        assertFalse(nodeService.isNodeHeightNeedsToCorrect(node, 123L));
+        assertTrue(node.isHeightOk());
+
+        assertFalse(nodeService.isNodeHeightNeedsToCorrect(node, 124L));
+        assertTrue(node.isHeightOk());
+    }
+
     @Test
     public void update() {
         Node node = createNode();
@@ -69,20 +85,38 @@ public class NodeServiceImplTest {
         assertFalse(node.isHeightOk());
         assertFalse(node.isVersionOk());
 
-//        node.setHeightOk(false);
-//        node.setVersionOk(false);
         nodeService.update(node, 1234, "1243");
 
         verifyNoMoreInteractions(nodeRepository);
         verifyNoMoreInteractions(eventPublisher);
         assertEquals(node.isVersionOk(), updated.isVersionOk());
         assertEquals(node.isHeightOk(), updated.isHeightOk());
-
-
     }
 
     @Test
-    public void update1() {
+    public void heightReturnToOkTest() {
+        Node node = createNode();
+        when(nodeRepository.save(node)).thenReturn(node);
+        node.setHeightOk(false);
+
+        Node updated = nodeService.update(node, 123, "1.6.5.860 (41b1aab)");
+        verify(nodeRepository).save(node);
+        verify(eventPublisher).publishEvent(any());
+        assertTrue(updated.isHeightOk());
+        assertTrue(updated.isVersionOk());
+    }
+
+    @Test
+    public void versionReturnToOkTest() {
+        Node node = createNode();
+        when(nodeRepository.save(node)).thenReturn(node);
+
+        node.setVersionOk(false);
+        Node updated = nodeService.update(node, 123, "1.6.5.860");
+        verify(nodeRepository).save(node);
+        verify(eventPublisher).publishEvent(any());
+        assertTrue(updated.isVersionOk());
+        assertTrue(updated.isHeightOk());
     }
 
     @Test
@@ -111,6 +145,7 @@ public class NodeServiceImplTest {
 
     private Node createNode() {
         Node node = new Node();
+        node.setAddress("test node address");
         node.setVersionOk(true);
         node.setHeightOk(true);
         node.setVersion("1.6.5.860 ()");
