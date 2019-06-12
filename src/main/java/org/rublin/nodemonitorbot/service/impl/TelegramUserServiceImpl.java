@@ -1,9 +1,10 @@
-package org.rublin.nodemonitorbot.service;
+package org.rublin.nodemonitorbot.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rublin.nodemonitorbot.model.TelegramUser;
 import org.rublin.nodemonitorbot.repository.TelegramUserRepository;
+import org.rublin.nodemonitorbot.service.TelegramUserService;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

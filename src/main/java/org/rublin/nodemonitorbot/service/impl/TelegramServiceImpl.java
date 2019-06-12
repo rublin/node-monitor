@@ -1,4 +1,4 @@
-package org.rublin.nodemonitorbot.service;
+package org.rublin.nodemonitorbot.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -6,6 +6,9 @@ import org.rublin.nodemonitorbot.dto.TelegramResponseDto;
 import org.rublin.nodemonitorbot.exception.TelegramProcessException;
 import org.rublin.nodemonitorbot.model.Node;
 import org.rublin.nodemonitorbot.model.TelegramUser;
+import org.rublin.nodemonitorbot.service.NodeService;
+import org.rublin.nodemonitorbot.service.TelegramService;
+import org.rublin.nodemonitorbot.service.TelegramUserService;
 import org.rublin.nodemonitorbot.telegram.TelegramCommand;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -46,7 +49,7 @@ public class TelegramServiceImpl implements TelegramService {
     private static final String INFO_MESSAGE = "I can show you known Karbo nodes (Get button).\n" +
             "You can add your node (Add button) and subscribe for the notification about availability, height, and version\n\n" +
             "Also, I have REST endpoint with all active nodes:\n" +
-            "url\n\n" +
+            "https://node-monitor.cfapps.io/api/nodes\n\n" +
             "Address for donate: \n" +
             "donate.rublin.org or\n" +
             "KaAxHCPtJaFGDq4xLn3fASf3zVrAmqyE4359zn3r3deVjCeM3CYq7K4Y1pkfZkjfRd1W2VPXVZdA5RBdpc4Vzamo1H4F5qZ\n\n";

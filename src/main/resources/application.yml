@@ -3,6 +3,8 @@ telegram:
   bot:
     token: 834692987:AAE9LuFuVYBj388YY_51wcrIJdURLHzcxSE
     name: karbo_node_bot
+    notification:
+      delay: 1000
 server:
   port: 8087
 

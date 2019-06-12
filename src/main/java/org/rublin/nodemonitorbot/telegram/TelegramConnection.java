@@ -46,7 +46,7 @@ public class TelegramConnection extends TelegramLongPollingBot {
         }
     }
 
-    private void send(String message, ReplyKeyboardMarkup keyboard, long chatId) {
+    public void send(String message, ReplyKeyboardMarkup keyboard, long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.enableHtml(true);
         sendMessage.setChatId(chatId);

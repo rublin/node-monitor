@@ -1,14 +1,14 @@
-package org.rublin.nodemonitorbot.service;
+package org.rublin.nodemonitorbot.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rublin.nodemonitorbot.dto.NodeInfoResponseDto;
-import org.rublin.nodemonitorbot.events.OnHeightEvent;
-import org.rublin.nodemonitorbot.events.OnNodeVersionEvent;
+import org.rublin.nodemonitorbot.events.OnNodeNotifyEvent;
 import org.rublin.nodemonitorbot.exception.TelegramProcessException;
 import org.rublin.nodemonitorbot.model.Node;
 import org.rublin.nodemonitorbot.model.TelegramUser;
 import org.rublin.nodemonitorbot.repository.NodeRepository;
+import org.rublin.nodemonitorbot.service.NodeService;
 import org.rublin.nodemonitorbot.utils.NodeConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -32,7 +32,7 @@ import static java.lang.String.format;
 @RequiredArgsConstructor
 public class NodeServiceImpl implements NodeService {
 
-    public static final String URL = "http://%s:%d/getinfo";
+    private static final String URL = "http://%s:%d/getinfo";
 
     private final NodeRepository nodeRepository;
     private final RestTemplate restTemplate;
@@ -79,26 +79,51 @@ public class NodeServiceImpl implements NodeService {
 
     @Override
     public Node update(Node node, long height, String version) {
+        String message = "";
+        if (isNodeHeightNeedsToCorrect(node, height)) {
+            message = format("Your node [%s] has wrong height: %d. The correct height: %d\n", node.getAddress(), height, node.getHeight());
+        }
+        if (isNodeVersionNeedsToUpdate(node, version)) {
+            message = message.concat(message.isEmpty() ? "" : "Also, ");
+            message = message.concat(format("Your node [%s] version %s is not the latest. The latest version is %s",
+                    node.getAddress(),
+                    node.getVersion(),
+                    version));
+        }
+        if (message.isEmpty()) {
+            return node;
+        } else {
+            eventPublisher.publishEvent(new OnNodeNotifyEvent(message, node));
+            return nodeRepository.save(node);
+        }
+    }
+
+    boolean isNodeVersionNeedsToUpdate(Node node, String version) {
+        String nodeVersion = node.getVersion().contains(" ") ? node.getVersion().split(" ")[0] : node.getVersion();
+        version = version.contains(" ") ? version.split(" ")[0] : version;
+        if (!version.equals(nodeVersion) && node.isVersionOk()) {
+            node.setVersionOk(false);
+            log.info("Node {} has wrong version {}", node.getAddress(), node.getVersion());
+            return true;
+        } else if (version.equals(nodeVersion) && !node.isVersionOk()) {
+            log.info("Node {} has good version now", node.getAddress());
+            node.setVersionOk(false);
+        }
+        return false;
+    }
+
+    private boolean isNodeHeightNeedsToCorrect(Node node, long height) {
         if (height - node.getHeight() > 3 && node.isHeightOk()) {
             // node is not up to date
             node.setAvailable(false);
             node.setHeightOk(false);
-            nodeRepository.save(node);
-            eventPublisher.publishEvent(new OnHeightEvent(
-                    format("Your node has wrong height: %d. The correct height: %d",
-                            node.getHeight(),
-                            height),
-                    node));
-        } else if (!version.equals(node.getVersion()) && node.isVersionOk()) {
-            node.setVersionOk(false);
-            nodeRepository.save(node);
-            eventPublisher.publishEvent(new OnNodeVersionEvent(
-                    format("Your node version (%s) is not the latest. The latest version is %s",
-                            node.getVersion(),
-                            version),
-                    node));
+            log.info("Node {} has wrong height {}", node.getAddress(), node.getHeight());
+            return true;
+        } else if (height - node.getHeight() == 0 && !node.isHeightOk()) {
+            node.setAvailable(true);
+            node.setHeightOk(true);
         }
-        return node;
+        return false;
     }
 
     @Override

@@ -4,13 +4,15 @@ import lombok.Getter;
 import org.rublin.nodemonitorbot.model.Node;
 import org.springframework.context.ApplicationEvent;
 
-@Getter
-public class OnNodeVersionEvent extends ApplicationEvent {
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
+@Getter
+public class OnNodeNotifyEvent extends ApplicationEvent {
     private String message;
     private Node node;
 
-    public OnNodeVersionEvent(String message, Node node) {
+    public OnNodeNotifyEvent(@NotBlank String message, @NotNull Node node) {
         super(message);
         this.message = message;
         this.node = node;

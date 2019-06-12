@@ -23,6 +23,7 @@ public class NodeRestController {
         List<Node> activeNodes = nodeService.getAllActive();
         log.info("Return {} active nodes", activeNodes.size());
         return activeNodes.stream()
+                .filter(Node::isHeightOk)
                 .map(node -> NodeDto.builder()
                         .address(node.getAddress())
                         .version(node.getVersion())
@@ -30,7 +31,7 @@ public class NodeRestController {
                         .uptime(node.uptime())
                         .height(node.getHeight())
                         .build())
-                .sorted()
+//                .sorted()
                 .collect(Collectors.toList());
     }
 
