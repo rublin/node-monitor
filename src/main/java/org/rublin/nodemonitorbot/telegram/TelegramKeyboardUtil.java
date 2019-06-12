@@ -10,7 +10,7 @@ import static org.rublin.nodemonitorbot.telegram.TelegramCommand.*;
 
 public class TelegramKeyboardUtil {
     public static ReplyKeyboardMarkup defaultKeyboard() {
-        ReplyKeyboardMarkup replyKeyboardMarkup = initKeyboard();
+        ReplyKeyboardMarkup replyKeyboardMarkup = returnKeyboard();
         replyKeyboardMarkup.getKeyboard().clear();
         replyKeyboardMarkup.getKeyboard().add(createKeyboardRow(
                 ADD.getCommandName(),
@@ -23,17 +23,13 @@ public class TelegramKeyboardUtil {
     }
 
     public static ReplyKeyboardMarkup getAll() {
-        ReplyKeyboardMarkup replyKeyboardMarkup = initKeyboard();
+        ReplyKeyboardMarkup replyKeyboardMarkup = returnKeyboard();
         replyKeyboardMarkup.getKeyboard().add(0, createKeyboardRow(GET_ALL.getCommandName()));
 
         return replyKeyboardMarkup;
     }
 
     public static ReplyKeyboardMarkup returnKeyboard() {
-        return initKeyboard();
-    }
-
-    private static ReplyKeyboardMarkup initKeyboard() {
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         keyboardMarkup.setSelective(true);
         keyboardMarkup.setOneTimeKeyboard(true);

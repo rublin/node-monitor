@@ -28,12 +28,28 @@ import static org.rublin.nodemonitorbot.telegram.TelegramCommand.SUBSCRIBE;
 import static org.rublin.nodemonitorbot.telegram.TelegramCommand.UNSUBSCRIBE;
 import static org.rublin.nodemonitorbot.telegram.TelegramKeyboardUtil.defaultKeyboard;
 import static org.rublin.nodemonitorbot.telegram.TelegramKeyboardUtil.getAll;
+import static org.rublin.nodemonitorbot.telegram.TelegramKeyboardUtil.returnKeyboard;
 import static org.rublin.nodemonitorbot.utils.AddressResolver.getIpAddress;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramServiceImpl implements TelegramService {
+
+    private static final String HELLO_MESSAGE = "Hello, %s\n\nWhat you want to do with Karbo nodes?";
+    private static final String ADDRESS_MESSAGE = "Type node IP or hostname for adding";
+    private static final String ALREADY_SUBSCRIBED_MESSAGE = "You already subscribed to node %s";
+    private static final String SUBSCRIBED_MESSAGE = "You successfully subscribed to node %s";
+    private static final String UNSUBSCRIBED_MESSAGE = "You successfully unsubscribed from node %s";
+    private static final String NO_SUBSCRIPTIONS_MESSAGE = "You do not have any subscriptions yet";
+    private static final String NEXT_STEP_MESSAGE = "Select the next step";
+    private static final String INFO_MESSAGE = "I can show you known Karbo nodes (Get button).\n" +
+            "You can add your node (Add button) and subscribe for the notification about availability, height, and version\n\n" +
+            "Also, I have REST endpoint with all active nodes:\n" +
+            "url\n\n" +
+            "Address for donate: \n" +
+            "donate.rublin.org or\n" +
+            "KaAxHCPtJaFGDq4xLn3fASf3zVrAmqyE4359zn3r3deVjCeM3CYq7K4Y1pkfZkjfRd1W2VPXVZdA5RBdpc4Vzamo1H4F5qZ\n\n";
 
     private final NodeService nodeService;
     private final TelegramUserService telegramUserService;
@@ -64,7 +80,7 @@ public class TelegramServiceImpl implements TelegramService {
         return TelegramResponseDto.builder()
                 .id(message.getChatId())
                 .messages(Collections.singletonList(
-                        format("Hello, %s\n\nWhat you want to do with Krabo nodes?", name)))
+                        format(HELLO_MESSAGE, name)))
                 .keyboard(defaultKeyboard())
                 .build();
     }
@@ -78,31 +94,31 @@ public class TelegramServiceImpl implements TelegramService {
         switch (command) {
             case ADD:
                 previousCommand.put(chatId, command);
-                responseMessages.add("Type node IP or hostname for adding");
-                keyboard = null;
+                responseMessages.add(ADDRESS_MESSAGE);
+                keyboard = returnKeyboard();
                 break;
 
             case SUBSCRIBE:
                 Node node = nodeService.get(getIpAddress(addressFromCommand(message.getText())));
                 if (node.getSubscribers().contains(user)) {
                     log.debug("User {} already subscribed to node {}", user.getTelegramId(), node.getAddress());
-                    responseMessages.add("You already subscribed to node " + node.getAddress());
+                    responseMessages.add(format(ALREADY_SUBSCRIBED_MESSAGE, node.getAddress()));
                 } else {
                     node = nodeService.subscribe(node, user);
                     log.info("User {} successfully subscribed to node {}", user.getTelegramId(), node.getAddress());
-                    responseMessages.add("You successfully subscribed to node " + node.getAddress());
+                    responseMessages.add(format(SUBSCRIBED_MESSAGE, node.getAddress()));
                 }
                 break;
 
             case UNSUBSCRIBE:
                 String address = addressFromCommand(message.getText());
                 nodeService.unsubscribe(address, user);
-                responseMessages.add("You successfully unsubscribed from node " + address);
+                responseMessages.add(format(UNSUBSCRIBED_MESSAGE, address));
                 break;
 
             case GET:
                 previousCommand.put(chatId, command);
-                responseMessages.add("Type node IP or select " + GET_ALL.getCommandName());
+                responseMessages.add(ADDRESS_MESSAGE.concat("\nOr select ").concat(GET_ALL.getCommandName()));
                 keyboard = getAll();
                 break;
 
@@ -120,17 +136,17 @@ public class TelegramServiceImpl implements TelegramService {
                         .map(n -> nodeToTelegram(n, user))
                         .collect(toList()));
                 if (responseMessages.isEmpty()) {
-                    responseMessages.add("You do not have any subscriptions yet");
+                    responseMessages.add(NO_SUBSCRIPTIONS_MESSAGE);
                 }
                 break;
 
             case RETURN:
                 previousCommand.remove(chatId);
-                responseMessages.add("Select the next step");
+                responseMessages.add(NEXT_STEP_MESSAGE);
                 break;
 
             case INFO:
-                responseMessages.add("Not implemented yet");
+                responseMessages.add(INFO_MESSAGE);
                 break;
 
         }
