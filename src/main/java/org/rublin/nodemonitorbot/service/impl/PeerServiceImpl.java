@@ -59,11 +59,13 @@ public class PeerServiceImpl implements PeerService {
 
     @Override
     public List<Peer> getKnownPeers(Set<String> addresses) {
+        long start = System.currentTimeMillis();
         List<Peer> knownPeers = peerRepository.findByAddressIn(addresses);
-        log.info("Found {} known addresses from {}. {} are new",
+        log.info("Found {} known addresses from {}. {} are new. Searching takes {} ms",
                 knownPeers.size(),
                 addresses.size(),
-                addresses.size() - knownPeers.size());
+                addresses.size() - knownPeers.size(),
+                System.currentTimeMillis() - start);
         return knownPeers;
     }
 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rublin.nodemonitorbot.model.Node;
 import org.rublin.nodemonitorbot.model.Peer;
+import org.rublin.nodemonitorbot.repository.PeerRepository;
 import org.rublin.nodemonitorbot.service.NodeService;
 import org.rublin.nodemonitorbot.service.PeerService;
 import org.rublin.nodemonitorbot.service.ScheduledService;
@@ -38,6 +39,7 @@ public class ScheduledServiceImpl implements ScheduledService {
     @Override
     @Scheduled(cron = "${node.cron}")
     public void checkNode() {
+        long start = System.currentTimeMillis();
         log.info("Cron job started");
         List<Node> allNodes = nodeService.getAll().stream()
                 .map(nodeService::update)
@@ -55,6 +57,7 @@ public class ScheduledServiceImpl implements ScheduledService {
         long height = allNodes.get(0).getHeight();
 
         allNodes.forEach(node -> nodeService.update(node, height, latestVersion));
+        log.info("Scheduled job takes {} ms", System.currentTimeMillis() - start);
     }
 
     @Override
@@ -86,6 +89,4 @@ public class ScheduledServiceImpl implements ScheduledService {
                 peersToUpdate.size(),
                 System.currentTimeMillis() - start);
     }
-
-
 }

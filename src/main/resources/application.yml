@@ -12,7 +12,7 @@ node:
   port: 32348
   cron: "0 0/5 * * * *"
   find:
-    cron: "0 0 1 * * *"
+    cron: "10 5 15 * * *"
     retry:
       days: 7
 spring:
