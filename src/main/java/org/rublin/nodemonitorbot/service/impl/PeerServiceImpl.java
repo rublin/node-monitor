@@ -34,7 +34,7 @@ public class PeerServiceImpl implements PeerService {
 
     private final PeerRepository peerRepository;
     private final NodeService nodeService;
-    private final RestTemplate restTemplate;
+    private final RestTemplate peerRestTemplate;
 
     @Value("${node.port}")
     private int port;
@@ -85,7 +85,7 @@ public class PeerServiceImpl implements PeerService {
             peer.setUpdated(ZonedDateTime.now(UTC));
         });
         List<Peer> savedPeers = peerRepository.saveAll(peers);
-        log.info("Updated {} peers", savedPeers);
+        log.info("Updated {} peers", savedPeers.size());
         return savedPeers;
     }
 
@@ -94,7 +94,7 @@ public class PeerServiceImpl implements PeerService {
             Node node = nodeService.registerNode(peer.getAddress());
             log.info("Node {} was found", node.getAddress());
         } catch (Throwable throwable) {
-            log.warn("Looks like {} not a node", peer.getAddress());
+            log.trace("Looks like {} not a node", peer.getAddress());
         }
     }
 
@@ -105,11 +105,16 @@ public class PeerServiceImpl implements PeerService {
     }
 
     private Optional<PeersFromNodeDto> getPeers(String ip) {
-        ResponseEntity<PeersFromNodeDto> response = restTemplate.getForEntity(format(URL, ip, port), PeersFromNodeDto.class);
-        if (HttpStatus.OK == response.getStatusCode()) {
-            log.debug("Received peer response from {} node", ip);
-            return Optional.ofNullable(response.getBody());
+        try {
+            ResponseEntity<PeersFromNodeDto> response = peerRestTemplate.getForEntity(format(URL, ip, port), PeersFromNodeDto.class);
+            if (HttpStatus.OK == response.getStatusCode()) {
+                log.debug("Received peer response from {} node", ip);
+                return Optional.ofNullable(response.getBody());
+            }
+        } catch (Throwable throwable) {
+            log.warn("Failed to getPeers from {} node: {}", ip, throwable.getMessage());
         }
+
         return Optional.empty();
     }
 }

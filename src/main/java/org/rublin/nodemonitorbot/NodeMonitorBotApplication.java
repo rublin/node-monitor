@@ -1,5 +1,6 @@
 package org.rublin.nodemonitorbot;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -24,16 +25,19 @@ import static java.time.ZoneOffset.UTC;
 @SpringBootApplication
 public class NodeMonitorBotApplication {
 
+    @Value("${timeout}")
+    private int timeout;
+
     public static void main(String[] args) {
         ApiContextInitializer.init();
         SpringApplication.run(NodeMonitorBotApplication.class, args);
     }
 
     @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+    public RestTemplate restTemplateInfo(RestTemplateBuilder builder) {
         return builder
-                .setConnectTimeout(Duration.ofMillis(100))
-                .setReadTimeout(Duration.ofMillis(500))
+                .setConnectTimeout(Duration.ofMillis(timeout))
+                .setReadTimeout(Duration.ofMillis(timeout))
                 .build();
     }
 

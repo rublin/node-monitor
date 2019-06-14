@@ -7,6 +7,7 @@ import org.rublin.nodemonitorbot.model.Peer;
 import org.rublin.nodemonitorbot.service.NodeService;
 import org.rublin.nodemonitorbot.service.PeerService;
 import org.rublin.nodemonitorbot.service.ScheduledService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,9 @@ public class ScheduledServiceImpl implements ScheduledService {
 
     private final NodeService nodeService;
     private final PeerService peerService;
+
+    @Value("${node.find.retry.days}")
+    private int daysRetry;
 
     @Override
     @Scheduled(cron = "${node.cron}")
@@ -66,7 +70,7 @@ public class ScheduledServiceImpl implements ScheduledService {
         Set<String> knownAddresses = knownPeers.stream()
                 .map(Peer::getAddress)
                 .collect(toSet());
-        ZonedDateTime updateTimeLimit = ZonedDateTime.now(UTC).minusDays(7);
+        ZonedDateTime updateTimeLimit = ZonedDateTime.now(UTC).minusDays(daysRetry);
         Set<Peer> peersToUpdate = knownPeers.stream()
                 .filter(peer -> peer.getUpdated().isBefore(updateTimeLimit))
                 .collect(Collectors.toSet());

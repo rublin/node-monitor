@@ -35,7 +35,7 @@ public class NodeServiceImpl implements NodeService {
     private static final String URL = "http://%s:%d/getinfo";
 
     private final NodeRepository nodeRepository;
-    private final RestTemplate restTemplate;
+    private final RestTemplate infoRestTemplate;
     private final ApplicationEventPublisher eventPublisher;
 
     @Value("${node.port}")
@@ -178,11 +178,16 @@ public class NodeServiceImpl implements NodeService {
     }
 
     private Optional<NodeInfoResponseDto> verifyNode(String ip) {
-        ResponseEntity<NodeInfoResponseDto> response = restTemplate.getForEntity(format(URL, ip, port), NodeInfoResponseDto.class);
-        if (HttpStatus.OK == response.getStatusCode()) {
-            log.debug("Received response from {} node", ip);
-            return Optional.ofNullable(response.getBody());
+        try {
+            ResponseEntity<NodeInfoResponseDto> response = infoRestTemplate.getForEntity(format(URL, ip, port), NodeInfoResponseDto.class);
+            if (HttpStatus.OK == response.getStatusCode()) {
+                log.debug("Received response from {} node", ip);
+                return Optional.ofNullable(response.getBody());
+            }
+        } catch (Throwable throwable) {
+            log.warn("Failed to verify node {}: {}", ip, throwable.getMessage());
         }
+
         return Optional.empty();
     }
 }
