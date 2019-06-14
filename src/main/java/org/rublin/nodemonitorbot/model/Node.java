@@ -34,7 +34,8 @@ public class Node {
     public int uptime() {
         long secondsAfterAdded = Duration.between(added, ZonedDateTime.now(UTC)).getSeconds();
 
-        return secondsAfterAdded == 0 ? 100 : (int) (online.getSeconds() * 100 / secondsAfterAdded);
+        return secondsAfterAdded == 0 ? 0 :
+                (int) Math.round(online.getSeconds() * 100.0 / secondsAfterAdded);
     }
 
     @Override

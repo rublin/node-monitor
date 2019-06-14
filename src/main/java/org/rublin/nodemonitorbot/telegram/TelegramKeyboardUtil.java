@@ -14,9 +14,9 @@ public class TelegramKeyboardUtil {
         replyKeyboardMarkup.getKeyboard().clear();
         replyKeyboardMarkup.getKeyboard().add(createKeyboardRow(
                 ADD.getCommandName(),
-                MY_SUBSCRIPTIONS.getCommandName(),
                 GET.getCommandName()));
         replyKeyboardMarkup.getKeyboard().add(createKeyboardRow(
+                MY_SUBSCRIPTIONS.getCommandName(),
                 INFO.getCommandName()));
 
         return replyKeyboardMarkup;

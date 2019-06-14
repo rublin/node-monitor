@@ -13,8 +13,8 @@ public class NodeTest {
     @Test
     public void uptime() {
         Node node = new Node();
-        node.setAdded(ZonedDateTime.now(UTC).now().minusDays(30));
-        node.setOnline(Duration.ofDays(30));
+        node.setAdded(ZonedDateTime.now().minusDays(30));
+        node.setOnline(Duration.ofDays(30).minusMinutes(10));
         assertEquals("Expect node with 100% uptime", 100, node.uptime());
         node.setOnline(Duration.ofDays(15));
         assertEquals("Expect node with 50% uptime", 50, node.uptime());
