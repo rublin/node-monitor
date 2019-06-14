@@ -11,7 +11,8 @@ server:
 node:
   port: 32348
   cron: "0 0/5 * * * *"
-#  core:
+  find:
+    cron: "0 0/10 * * * *"
 spring:
   data:
     mongodb:
