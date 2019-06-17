@@ -13,10 +13,15 @@ public class NodeConverter {
     public static Node convert(Node node, Optional<NodeInfoResponseDto> infoOptional) {
         if (infoOptional.isPresent()) {
             NodeInfoResponseDto info = infoOptional.get();
+            if (node.getHeight() == 0) {
+                node.setVersionOk(false);
+                node.setHeightOk(false);
+            }
             node.setHeight(info.getHeight());
             node.setVersion(info.getVersion());
             node.setAvailable(true);
-            node.setOnline(node.getOnline().plus(Duration.between(node.getUpdated(), ZonedDateTime.now(UTC))));
+            node.setOnline(node.getOnline()
+                    .plus(Duration.between(node.getUpdated(), ZonedDateTime.now(UTC))));
         } else {
             node.setAvailable(false);
         }
