@@ -10,6 +10,7 @@ import org.rublin.nodemonitorbot.service.NodeService;
 import org.rublin.nodemonitorbot.service.TelegramService;
 import org.rublin.nodemonitorbot.service.TelegramUserService;
 import org.rublin.nodemonitorbot.telegram.TelegramCommand;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -46,18 +47,11 @@ public class TelegramServiceImpl implements TelegramService {
     private static final String UNSUBSCRIBED_MESSAGE = "You successfully unsubscribed from node %s";
     private static final String NO_SUBSCRIPTIONS_MESSAGE = "You do not have any subscriptions yet";
     private static final String NEXT_STEP_MESSAGE = "Select the next step";
-    private static final String INFO_MESSAGE = "I can show you known Karbo nodes (Get button).\n" +
-            "You can add your node (Add button) and subscribe for the notification about availability, height, and version\n\n" +
-            "Also, I have REST endpoint with all active nodes:\n" +
-            "https://node-monitor.cfapps.io/api/nodes\n\n" +
-            "Address for donate: \n" +
-            "donate.rublin.org or\n" +
-            "KaAxHCPtJaFGDq4xLn3fASf3zVrAmqyE4359zn3r3deVjCeM3CYq7K4Y1pkfZkjfRd1W2VPXVZdA5RBdpc4Vzamo1H4F5qZ\n\n";
-
     private final NodeService nodeService;
     private final TelegramUserService telegramUserService;
-
-    private Map<Long, TelegramCommand> previousCommand = new ConcurrentHashMap<>();
+    @Value("${message.info}")
+    private String infoMessage;
+    private final Map<Long, TelegramCommand> previousCommand = new ConcurrentHashMap<>();
 
     @Override
     public TelegramResponseDto process(Message message) {
@@ -149,7 +143,7 @@ public class TelegramServiceImpl implements TelegramService {
                 break;
 
             case INFO:
-                responseMessages.add(INFO_MESSAGE);
+                responseMessages.add(infoMessage.replaceAll("nn", "\n"));
                 break;
 
         }

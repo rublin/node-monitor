@@ -15,6 +15,9 @@ node:
     cron: "10 5 15 * * *"
     retry:
       days: 7
+
+message:
+  info: I can show you known Karbo nodes (Get button).nn You can add your node (Add button) and subscribe for the notification about availability, height, and version nnnn Also, I have REST endpoint with all active nodes nn https://node-monitor.cfapps.io/api/nodes nnnn Address for donate nn donate.rublin.org or nn KaAxHCPtJaFGDq4xLn3fASf3zVrAmqyE4359zn3r3deVjCeM3CYq7K4Y1pkfZkjfRd1W2VPXVZdA5RBdpc4Vzamo1H4F5qZ nnnn
 spring:
   data:
     mongodb:
@@ -23,3 +26,6 @@ spring:
       host: ds231537.mlab.com
       port: 31537
       database: karbo-nodes
+logging:
+  file:
+    max-history: 5
