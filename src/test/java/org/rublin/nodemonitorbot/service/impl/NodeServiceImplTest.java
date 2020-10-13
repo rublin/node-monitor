@@ -1,5 +1,6 @@
 package org.rublin.nodemonitorbot.service.impl;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -8,6 +9,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.rublin.nodemonitorbot.model.Node;
 import org.rublin.nodemonitorbot.repository.NodeRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import static org.junit.Assert.assertEquals;
@@ -30,6 +32,11 @@ public class NodeServiceImplTest {
 
     @InjectMocks
     private NodeServiceImpl nodeService;
+
+    @Before
+    public void init() {
+        ReflectionTestUtils.setField(nodeService, "heightLimit", 5L);
+    }
 
     @Test
     public void registerNode() {
@@ -57,7 +64,7 @@ public class NodeServiceImplTest {
     public void nodeHeightTest() {
         Node node = createNode();
 
-        assertTrue(nodeService.isNodeHeightNeedsToCorrect(node, 127L));
+        assertTrue(nodeService.isNodeHeightNeedsToCorrect(node, 129L));
         assertFalse(node.isHeightOk());
 
         node.setHeightOk(true);

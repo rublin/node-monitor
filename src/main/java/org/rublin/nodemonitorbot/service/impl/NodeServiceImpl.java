@@ -42,7 +42,7 @@ public class NodeServiceImpl implements NodeService {
     private int port;
 
     @Value("${node.height.limit}")
-    private long heightLimit;
+    private Long heightLimit;
 
     @Override
     public Node registerNode(String address) {
