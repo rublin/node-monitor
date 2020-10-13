@@ -11,6 +11,8 @@ timeout: 500
 node:
   port: 32348
   cron: "0 0/5 * * * *"
+  height:
+    limit: 5
   find:
     cron: "10 5 15 * * *"
     retry:
@@ -21,11 +23,7 @@ message:
 spring:
   data:
     mongodb:
-      username: java-node-bot
-      password: jH6#2kurWZ1L
-      host: ds231537.mlab.com
-      port: 31537
-      database: karbo-nodes
+      uri: mongodb+srv://java-node-bot:jH6#2kurWZ1L@karbo-nodes.3a4gx.mongodb.net/karbo-nodes?retryWrites=true&w=majority
 logging:
   file:
     max-history: 5

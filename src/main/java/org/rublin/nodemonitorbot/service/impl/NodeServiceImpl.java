@@ -41,6 +41,9 @@ public class NodeServiceImpl implements NodeService {
     @Value("${node.port}")
     private int port;
 
+    @Value("${node.height.limit}")
+    private long heightLimit;
+
     @Override
     public Node registerNode(String address) {
         Optional<NodeInfoResponseDto> optionalResponse = verifyNode(address);
@@ -83,7 +86,7 @@ public class NodeServiceImpl implements NodeService {
         if (isNodeHeightNeedsToCorrect(node, height)) {
             message = node.isHeightOk() ?
                     format("Your node [%s] height is good now \ud83d\udc4d\n", node.getAddress()) :
-                    format("\u26A0\u26A0\u26A0 Your node [%s] has wrong height: %d. The correct height: %d\n", node.getAddress(), height, node.getHeight());
+                    format("\u26A0\u26A0\u26A0 Your node [%s] has wrong height: %d. The correct height: %d\n", node.getAddress(), node.getHeight(), height);
         }
         if (isNodeVersionNeedsToUpdate(node, version)) {
             message = node.isVersionOk() ?
@@ -117,7 +120,7 @@ public class NodeServiceImpl implements NodeService {
     }
 
     boolean isNodeHeightNeedsToCorrect(Node node, long height) {
-        if (height - node.getHeight() > 3 && node.isHeightOk()) {
+        if (height - node.getHeight() > heightLimit && node.isHeightOk()) {
             // node is not up to date
             node.setAvailable(false);
             node.setHeightOk(false);
