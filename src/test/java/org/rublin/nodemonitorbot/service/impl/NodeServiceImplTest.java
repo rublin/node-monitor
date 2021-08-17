@@ -53,11 +53,8 @@ public class NodeServiceImplTest {
         assertTrue(node.isVersionOk());
         assertFalse(nodeService.isNodeVersionNeedsToUpdate(node, "1.6.5.860 (41b1aab)"));
         assertFalse(nodeService.isNodeVersionNeedsToUpdate(node, "1.6.5.860"));
+        assertFalse(nodeService.isNodeVersionNeedsToUpdate(node, "1.6.5"));
         assertTrue(node.isVersionOk());
-
-        node.setVersionOk(false);
-        assertFalse(nodeService.isNodeVersionNeedsToUpdate(node, ""));
-        assertFalse(node.isVersionOk());
     }
 
     @Test
@@ -124,30 +121,6 @@ public class NodeServiceImplTest {
         verify(eventPublisher).publishEvent(any());
         assertTrue(updated.isVersionOk());
         assertTrue(updated.isHeightOk());
-    }
-
-    @Test
-    public void subscribe() {
-    }
-
-    @Test
-    public void unsubscribe() {
-    }
-
-    @Test
-    public void mySubscriptions() {
-    }
-
-    @Test
-    public void getAll() {
-    }
-
-    @Test
-    public void getAllActive() {
-    }
-
-    @Test
-    public void get() {
     }
 
     private Node createNode() {
