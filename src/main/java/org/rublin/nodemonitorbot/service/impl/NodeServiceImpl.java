@@ -107,11 +107,11 @@ public class NodeServiceImpl implements NodeService {
     boolean isNodeVersionNeedsToUpdate(Node node, String version) {
         String nodeVersion = node.getVersion().contains(" ") ? node.getVersion().split(" ")[0] : node.getVersion();
         version = version.contains(" ") ? version.split(" ")[0] : version;
-        if (!version.equals(nodeVersion) && node.isVersionOk()) {
+        if (!nodeVersion.startsWith(version) && node.isVersionOk()) {
             node.setVersionOk(false);
             log.info("Node {} has wrong version {}", node.getAddress(), node.getVersion());
             return true;
-        } else if (version.equals(nodeVersion) && !node.isVersionOk()) {
+        } else if (nodeVersion.startsWith(version) && !node.isVersionOk()) {
             log.info("Node {} has good version now", node.getAddress());
             node.setVersionOk(true);
             return true;

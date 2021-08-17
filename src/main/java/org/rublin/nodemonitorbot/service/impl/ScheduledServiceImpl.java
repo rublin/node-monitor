@@ -4,10 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rublin.nodemonitorbot.model.Node;
 import org.rublin.nodemonitorbot.model.Peer;
-import org.rublin.nodemonitorbot.repository.PeerRepository;
 import org.rublin.nodemonitorbot.service.NodeService;
 import org.rublin.nodemonitorbot.service.PeerService;
 import org.rublin.nodemonitorbot.service.ScheduledService;
+import org.rublin.nodemonitorbot.service.VersionService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -32,6 +32,7 @@ public class ScheduledServiceImpl implements ScheduledService {
 
     private final NodeService nodeService;
     private final PeerService peerService;
+    private final VersionService versionService;
 
     @Value("${node.find.retry.days}")
     private int daysRetry;
@@ -47,11 +48,7 @@ public class ScheduledServiceImpl implements ScheduledService {
                 .sorted(Comparator.comparing(Node::getHeight).reversed())
                 .collect(toList());
 
-        List<String> versions = allNodes.stream()
-                .map(Node::getVersion)
-                .sorted(Comparator.reverseOrder())
-                .collect(toList());
-        String latestVersion = versions.get(0);
+        String latestVersion = versionService.latestVersion();
 
 //        should be the correct height
         long height = allNodes.get(0).getHeight();
