@@ -1,7 +1,7 @@
 # Telegram bot
 telegram:
   bot:
-    token: 834692987:AAE9LuFuVYBj388YY_51wcrIJdURLHzcxSE
+    token: token_here
     name: karbo_node_bot
     notification:
       delay: 1000
@@ -23,7 +23,7 @@ message:
 spring:
   data:
     mongodb:
-      uri: mongodb+srv://java-node-bot:jH6#2kurWZ1L@karbo-nodes.3a4gx.mongodb.net/karbo-nodes?retryWrites=true&w=majority
+      uri: mongodb+srv
 logging:
   file:
     max-history: 5
