@@ -27,3 +27,6 @@ spring:
 logging:
   file:
     max-history: 5
+  level:
+    org.mongodb: WARN
+    org.rublin.nodemonitorbot: DEBUG
