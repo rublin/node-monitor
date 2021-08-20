@@ -184,7 +184,7 @@ public class NodeServiceImpl implements NodeService {
         try {
             ResponseEntity<NodeInfoResponseDto> response = infoRestTemplate.getForEntity(format(URL, ip, port), NodeInfoResponseDto.class);
             if (HttpStatus.OK == response.getStatusCode()) {
-                log.debug("Received response from {} node", ip);
+                log.debug("Received response from {} node:\n{}", ip, response.getBody());
                 return Optional.ofNullable(response.getBody());
             }
         } catch (Throwable throwable) {
