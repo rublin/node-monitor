@@ -7,7 +7,7 @@ telegram:
       delay: 1000
 server:
   port: 8087
-timeout: 500
+timeout: 1000
 node:
   port: 32348
   cron: "0 0/5 * * * *"
