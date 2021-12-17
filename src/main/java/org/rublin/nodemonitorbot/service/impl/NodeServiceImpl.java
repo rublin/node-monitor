@@ -158,7 +158,7 @@ public class NodeServiceImpl implements NodeService {
 
     @Override
     public List<Node> getAll() {
-        List<Node> nodes = nodeRepository.findAll(new Sort(Sort.Direction.DESC, "height"));
+        List<Node> nodes = nodeRepository.findAll(Sort.by(Sort.Direction.DESC, "height"));
         log.info("Found all {} nodes", nodes.size());
         return nodes;
     }

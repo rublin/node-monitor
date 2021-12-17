@@ -43,11 +43,3 @@ jobs:
       with:
         name: java-app
 
-    - name: Deploy to Azure Web App
-      id: deploy-to-webapp
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: 'node-monitor'
-        slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_77300aad9df74b0ea73cd5bbe19a7d61 }}
-        package: '*.jar'
